@@ -1,6 +1,7 @@
 \documentclass[10pt,landscape]{article}
 \usepackage{multicol}
 \usepackage{calc}
+\usepackage{float}
 \usepackage[landscape]{geometry}
 \usepackage{amsmath,amsthm,amsfonts,amssymb,relsize}
 \usepackage{color,graphicx,overpic}
@@ -43,14 +44,6 @@
 \setlength{\multicolsep}{1pt}
 \setlength{\columnsep}{0pt}
 
-\section{Probability}
-\textbf{Bayes Theorem}:\\
-$P(Y=\pm 1 | X) = \frac{P(X|Y=\pm 1)P(Y=\pm 1)}{P(X|Y= +1)P(Y= +1) + P(X|Y= -1)P(Y= -1)}$
-\ruler
-$\bX$ and $\bY$ are \textbf{independent} iff $P(\bX,\bY)=P(\bX)P(\bY)$\\
-$\bX$ and $\bY$ are \textbf{uncorrelated} iff $\E(\bX,\bY)=\E(\bX)\E(\bY)$\\
-
-% --------------------------------
 
 \section{Matrix calculus}
 $
@@ -80,315 +73,175 @@ $-\frac{\theta_0}{\norm{\btheta}}$ is the \textbf{signed distance} from the orig
 \ruler
 \textbf{Perceptron algorithm},\\
 Input: $(\bx_1, y_1),\dots,(\bx_n, y_n) \in \R^{d} \times \{\pm 1\}$\\
-while some $y_i \neq \text{sign}(\btheta \cdot \bx_i)$\\
-\-\hspace{0.5cm} pick some misclassified $(\bx_i, y_i)$\\
-\-\hspace{0.5cm} $\btheta \leftarrow \btheta + y_i\bx_i$
+For each training example $\bx^{(i)}$:\\
+\-\hspace{0.5cm} compute $\hat y$\\
+\-\hspace{0.5cm} update weights: $w_j := w_j + \Delta w_j$
+$\Delta w_j = \eta (y^{(i)} - \hat y^{(i)})x_j^{(i)}$
 \ruler
 Given a \textbf{linearly separable data}, perceptron algorithm will take no more than $\frac{R^2}{\gamma^2}$ updates to \textbf{converge},
 where $R = \max_{i}{\norm{\bx_i}}$ is the radius of the data, $\gamma = \min_{i}{\frac{y_i(\btheta\cdot\bx_i)}{\norm{\btheta}}}$ is the margin.\\
 Also, $\frac{\btheta\cdot\bx}{\norm{\btheta}}$ is the signed distance from H to $\bx$ in the direction $\btheta$.
 \ruler
-$\btheta = \sum_{i} \alpha_i y_i \bx_i$, thus any inner product space will work, this is a \textbf{kernel}.
-\ruler
 \textbf{Gradient descent} view of perceptron, minimize margin cost function
 $J(\btheta) = \sum_{i}(-y_i(\btheta\cdot\bx_i))_{+}$ with $\btheta \leftarrow \btheta - \eta\nabla J(\btheta)$
 % --------------------------------
 
+\section{Logistic Regression}
+Widely used for binary classification
+The Logit funtion is defined as the logarithm of odds, i.e.,
+$$logit(p) = \log \frac{p}{1-p}$$
+$$\inv{logit}(z) = \phi(z) = \frac{1}{1+e^{-z}}$$
+
+Optimizing Log-likelihood function:
+$$J(\bw) = \sum_{i=1}^n[-y^{(i)}\log(\phi(z^{(i)}))-(1-y^{(i)})\log(1-\phi(z^{(i)}))]$$
+
+Weight update will be the same as Adaline training. To enable regularization, add $\frac{\lambda}{2}\sum_{j=1}^m{w_j^2}$ term (L2).
+% --------------------------------
 \section{Support Vector Machine}
 \textbf{Hard margin SVM},\\
-$\min_{\btheta} \norm{\btheta}^2$, such that $y_i\btheta\cdot\bx_i \geq 1 (i = 1,\dots,n)$\\
-\textbf{Soft margin SVM},\\
-$\min_{\btheta} \norm{\btheta}^2 + C\sum_{i=1}^{n}(1-y_i\btheta\cdot\bx_i)_+$
+$\min_{\bw} \norm{\bw}^2$, such that $y^{(i)}(w_0+\bw^T\bx^{(i)}) \geq 1 (\forall i = 1,\dots,n)$\\
+\textbf{Soft margin SVM (with positive slack variable $\xi$)},\\
+If point $x_i$ in on the wrong side, then get penalty $\xi^{(i)}$\\
+new optimization problem
+$$\arg min_{w, \xi^{(i)}} \frac{1}{2}||w||^2+C(\sum_{i}{\xi^{(i)}})$$
+
+Hinge Loss
+$$\xi^{(i)}=\max(0,1-y^{(i)}(w^T\cdot x^{(i)}+w_0))$$
+If the point is on the wrong side of the margin, the function's value is proportional to the distance from the margin\\
+SVM natural form:
+
+$$\arg min_{w, \xi^{(i)}} \frac{1}{2}||w||^2+C(\sum_{i}\max(0,1-y^{(i)}(w^T\cdot x^{(i)}+w_0)))$$
 \ruler
+
 \textbf{Regularization and SVMs}:
 Simulated data with many features $\phi(\bx)$;
 C controls trade-off between margin $1/\norm{\btheta}$ and fit to data;
 Large C: focus on fit to data (small margin is ok). More overfitting.
 Small C: focus on large margin, less tendency to overfit.
 Overfitting increases with: less data, more features.
-\ruler
-$\btheta = \sum_{j}\alpha_j y_j\bx_j$, $\alpha_j \neq 0$ only for support vectors.
-\columnbreak\\
-\textbf{Width} of the margin is $\frac{2}{\norm{\overrightarrow{\btheta}}}$.
+
+\textbf{Width} of the margin is $\frac{2}{\norm{\overrightarrow{\bw}}}$.
 \ruler
 $K(\bx_i, \bx_j) = \phi(\bx_i)\cdot\phi(\bx_j)$, K is called a kernel.\\
-Solve $\alpha_j$ to determine $\sum_j\alpha_j y_j\phi(\bx_j)$.\\
-Compute the classifier for a test point $\bx$ via $\btheta\cdot\phi(\bx) = \sum_{j}\alpha_j y_j K(\bx_j, \bx)$
-\ruler
 degree-m polynomial kernel: $K_m(\bx, \tilde{\bx}) = (1+\bx\cdot\tilde{\bx})^m$\\
 RBF kernel (infinite dimention): $K_{rbf}(\bx, \tilde{\bx}) = \text{exp}(-\gamma\norm{\bx-\tilde{\bx}}^2)$
 % --------------------------------
-
-\section{Decision Theory}
-\textbf{Loss function}: $l : \mathcal{Y} \times \mathcal{Y} \rightarrow \R$,
-and $l(\hat{y}, y)$ is the cost of predicting $\hat{y}$ when the outcome is $y$.
+\section{Data pre-processing}
+\textbf{Scaling:}\\
+min-max normalization: scaling to $[0,1]$ with $x^{(i)}_{norm} = \frac{x^{(i)}-x_{min}}{x_{max}-x_{min}}$\\
+Standardization with $x^{(i)}_{std} = \frac{x^{(i)}-\mu_x}{\sigma_x}$
 \ruler
-\textbf{Risk for a given class}:
-$R(\alpha_i|x) = \sum_{i=1}^{C}\lambda_{ij}P(w=j|x)$
-\ruler
-Assume $(\bX, \bY)$ are chosen i.i.d according to some probability distribution on $\mathcal{X}\times\mathcal{Y}$.
-\textbf{Risk} is misclassification probability: $R(f) = \E l(f(\bX), \bY) = Pr(f(\bX) \neq \bY)$
-\ruler
-\textbf{Bayes Decision Rule} is
-$
-f^{*}(x) =
-\begin{cases}
-    1,  & \text{if } P(\bY=1|x) > P(\bY=-1|x) \\
-    -1, & \text{otherwise. }
-\end{cases}
-$,\\
-and the optimal risk (Bayes risk) $R^{*} = \inf_{f}R(f)=R(f^*)$
-\ruler
-\textbf{Excess risk} is for any $f: \mathcal{X} \rightarrow \{-1, +1\}$,\\
-$R(f) - R^* = \E (1[f(x)\neq f^*(x)]|2P(\bY=+1|\bX) - 1|)$
-\ruler
-\textbf{Risk in Regression} is expected  squared error:
-$R(f) = \E l(f(\bX), \bY) = \E \E [f(\bX) - \bY^2 | \bX]$
-\ruler
-\textbf{Bias-variance decomposition}:
-$R(f) = \E[\underbrace{(f(\bX) - \E[\bY|\bX])^2}_{\text{bias}^2}] + \E[\underbrace{(\E[\bY|\bX]-\bY)^2}_{\text{variance}}]$\\
-$R(f) = \E[(f(\bX) - f^*(\bX))^2] + \E[(f^*(\bX)-\bY)^2]$\\
-$R(f) = \E[(f(\bX) - f^*(\bX))^2] + R(f*)$\\
-$R(f) - R(f*) = \E[(f(\bX) - f^*(\bX))^2]$, $f^*(\bX) = \E[\bY|\bX]$\\
+\textbf{Feature Selection:}\\
+- Simplify the model for easier interpretation\\
+- Shorten training time\\
+- Avoid the curse of dimensionality\\
+- reduce overfitting\\
+\textbf{L1 regularization:}\\
+diamond shape penalty makes optimum located on axes, which encourages sparsity (while L2 regularization leads to smaller weight)\\
+\textbf{Sequential Backward Selection (SBS):}\\
+1. initialize $k = d$\\
+2. Determine the feature $x^- = \arg \max J(X_k-x)$ that maximizes the criterion function $J$\\
+3. Remove $x^-$ from feature set\\
+\-\hspace{0.5cm} $X_{k-1} = X_{k}-x^-$\\
+\-\hspace{0.5cm} $k = k-1$\\
+4. Terminate if k equals desired number of features otherwise go to 2.\\
+\textbf{Random Forest:}\\
+The random forest implemented in scikit-learn already collects the feature importance value for us
 % --------------------------------
-
-\section{Generative and Discriminative}
-\textbf{Discriminative models}: $P(\bX, \bY) = P(\bX)P(\bY|\bX)$.\\
-Estimate $P(\bY|\bX)$, then pretend out estimate $\hat{P}(\bY|\bX)$ is the actual $P(\bY|\bX)$ and
-plug in bayes rule expression.
+\section{Dimensionality Reduction}
+Principal Component Analysis (PCA) for unsupervised data compression\\
+Linear Discriminant Analysis (LDA) as a supervised dimensionality reduction technique for maximizing class separability.
 \ruler
-\textbf{Generative model}: $P(\bX, \bY) = P(\bY)P(\bX|\bY)$.\\
-Estimate $P(\bY)$ and $P(\bX|\bY)$, then use bayes theorem to calculate $P(\bY|\bX)$ and use discriminative model.
-\ruler
-\textbf{Gaussian} class conditional densities $P(\bX|Y=+1)$,$P(\bX|Y=-1)$ (with the same variance), the posterior probability is \textbf{logistic}:\\
-$P(Y=+1|\bx) = \frac{1}{1+\text{exp}(-\bx\cdot\bbeta-\beta_0)}$,\\
-$\bbeta = \inv{\Sigma}(\bmu_{1}-\bmu_{0})$, $\beta_0=\frac{\tp{\bmu_{0}}\inv{\Sigma}\bmu0-\bmu_{1}\inv{\Sigma}\bmu1}{2}+\log\frac{P(Y=1)}{P(Y=0)}$
-% --------------------------------
-
-\section{Estimation}
-\textbf{Method of moments}:
-Match moments of the distribution to momemnts measured in the data.
-% \ruler
-\columnbreak\\
-\textbf{Maximum likelihood}:
-Choose parameter so that the distribution it defines gives the obverved data the highest probability (likelihood).
-\ruler
-\textbf{Maximum log likelihood}:
-Log of maximum likelihood, equilvalent to maximum likelihood since log is monotonically increase; it is useful
-since it can change $\prod$ to $\sum$.
-\ruler
-\textbf{Penalized maximum likelihood}:
-Add a penalty term in the maximum (log) likelihood equation; treat the penalty term as some imaginary data points
-crafted for desired probability.
-\ruler
-\textbf{Bayesian estimate}:
-Treat parameter as a random variable, then update based on observed value (data).\\
-Prior: $\pi(p) = 1$,\\
-Posterior: $P(p|\bX_1 = 1) = P(\bX_1 = 1|p)\pi(p) / \int P(X_1 = 1|q)d\pi(q)$
-\ruler
-\textbf{Maximum a posterior probability}: the mode of the posterior. If uniform prior, MAP is MLE; if not
-uniform prior, MAP is Penalized MLE.
-% --------------------------------
-
-\section{Multivariate Normal Distribution}
-$\inR{\bx}{d}: p(x) = \frac{1}{(2\pi)^{d/2}|\bSigma|^{1/2}}e^{(-\frac{1}{2}\tp{(\bx-\bmu)}\inv{\bSigma}(\bx-\bmu))}$
-\ruler
-\textbf{Covariance matrix}:
-$\bSigma = \E(\bX - \bmu)\tp{(\bX - \bmu)}$\\
+\textbf{PCA}:
+Finding the directions of maximum variance (as a new subspace)\\
+\textbf{Transformation Matrix}:
+Construct a $d \times k$ transformation matrix $\bW$ that maps a $d$-dimensional vector $\bx$ to a $k$-dimensional vector $\bz$. Typically, $d >> k$.\\
+$$\bx = [x_1,x_2,\dots,x_d]$$
+$$\downarrow \bx\bW, \bW \in \R^{d \times k}$$
+$$\bz = [z_1,z_2,\dots,z_k]$$
+\textbf{Approach}:\\
+1. Standardize $d$-dimensional dataset\\
+2. Construct covariance matrix\\
+3. Eigen-decompose covariance matrix\\
+4. Sort eigenvalues by decreasing order\\
+5. Select $k$ eigenvectors which correspond to the $k$ largest eigenvalues\\
+6. Construct a projection matrix $\bW$ from $k$ eigenvectors (let eigenvector be columns of $\bW$)\\
+7. Transform d-dimensional input dataset $\bX$ to obtain new $k$-dimensional feature subspace\\
+\textbf{Covariance matrix $\bSigma$}:\\
+$$\sigma_{jk} = \frac{1}{n}\sum_{i = 1}^n{(x^{(i)}_j-\mu_j)(x^{(i)}_k-\mu_k)}$$
+Here $\mu_j$ and $\mu_k$ are the sample means of features j and k, respectively.
 Symmetric: $\bSigma_{i,j} = \bSigma_{j_i}$\\
 Non-negative diagonal entries: $\bSigma{i,i} \geq 0$\\
 Positive semidefinite: $\forall \inR{\bv}{d}, \tp{\bv}\bSigma\bv \geq 0$
+\textbf{Decompose $\bSigma$}:\\
+$$\bSigma v = \lambda v$$
+Explained Variance: $\frac{\lambda_j}{\sum_{j=1}^{d}{\lambda_j}}$
+We can plot the Explained Variance and the accumulated sum to decide how many features to choose
 \ruler
-\textbf{Super-level} sets of pdf:
-$\bxi_r = \left\{ \inR{\bx}{d} : \tp{(\bx - \bmu)}\inv{\bSigma}(\bx-\bmu)\leq r^2 \right\}$.\\
-$\text{Volume of } \bxi_r \propto \prod^{d}_{i=1}\sigma_i = \sqrt{|\bSigma|}$
-\ruler
-\textbf{Spectral Theorem} for \textbf{non-diagonal covariance}:\\
-$U = [\bv_1, \bv_2, \dots, \bv_n], \bLambda = \diag(\tp{[\lambda_1, \lambda_2, \dots, \lambda_n]})$\\
-We can eigen decompose $\inv{\bSigma} = U\inv{\bLambda}\tp{U}$, this is like to change to a different eigen spaces, where covariances ($\bLambda$) diagonal axis-alianed.
-\ruler
-Assume independent,
-$ \gaussian{\bmu_x}{\bSigma} + \gaussian{\bmu_y}{\bSigma_y} = \gaussian{\bmu_x+\bmu_y}{\bSigma_x+\bSigma_y}$
-\ruler
-Given a $d$-dimensaional Gaussian $\bX \sim \gaussian{\bmu}{\bSigma}$,\\
-write $\bX = \left[ \begin{smallmatrix} \bY \\ \bZ \end{smallmatrix} \right]$,
-$\bmu = \left[ \begin{smallmatrix} \bmu_\bY \\ \bmu_\bZ \end{smallmatrix} \right]$,
-$\bSigma = \left[ \begin{smallmatrix} \bSigma_{\bY\bY} & \bSigma_{\bY\bZ} \\ \bSigma_{\bZ\bY} & \bSigma_{\bZ\bZ} \end{smallmatrix} \right]$,\\
-where $\inR{\bY}{m}$, and $\inR{\bZ}{d-m}$. Then $\bY \sim \gaussian{\mu_\bY}{\bSigma_{\bY\bY}}$
-\ruler
-Given a $d$-dimensaional Gaussian $\bX \sim \gaussian{\bmu}{\bSigma}$,\\
-matrix $\inR{\bA}{m\times d}$ and vector $\inR{\bb}{m}$, define $\bY = \bA\bX + \bb$.\\
-Then $\bY \sim \gaussian{\bA\bmu + \bb}{\bA\bSigma\tp{\bA}}$
-\ruler
-Given a $d$-dimensaional Gaussian $\bX \sim \gaussian{\bmu}{\bSigma}$,\\
-with $\bSigma$ positive definite,\\
-$\bY = \bSigma^{-\frac{1}{2}}(\bX-\bmu) \sim \gaussian{\mathbf{0}, \bI}$
-\ruler
-\textbf{Gaussian maximum likelihood estimation}:\\
-Sample mean: $\hat{\bmu} = \frac{1}{n}\sum_{i=1}^{n}\bx_i$;\\
-Sample covariance: $\hat{\bSigma} = \frac{1}{n}\sum_{i=1}^{n}(\bx_i - \hat{\bmu})\tp{(\bx_i - \hat{\bmu})}$
+\textbf{LDA}:
+LDA assumes that data is normally distributed, that the classes have identical covariance matrices, and that samples are statistically independent.\\
+
+Compare to PCA:\\
+LDA's goal is to find the feature subspaces that optimize class separability.\\
+\textbf{Approach}:\\
+1. Standardize the d-dimensional dataset\\
+2. For each class, compute the d-dimensional mean vector\\
+3. Construct the between-class scatter matrix $\bS_B$ and the within-class scatter matrix $\bS_w$\\
+4. Compute the eigenvectors and corresponding eigenvalues of the matrix $\inv{\bS_w} \bS_B$\\
+5. Sort the eigenvalues by decreasing order\\
+6. choose the top k eigenvector to construct $\bW$\\
+7. Project samples onto new subspace\\
+\textbf{Mean vector}:\\
+Each mean vector stores the mean feature value $\mu_m$ w.r.t the samples of class i.
+$$\bm_i = \frac{1}{n_i}{\sum_{x \in D_i}^{c}{\bx_m}}$$
+\textbf{Construct Scatter Matrix}:\\
+$$\bS_W = \sum_{i = 1}^c{\bS_i}$$
+$$\bS_i = \sum_{x \in D_i}^c{(\bx-\bm_i)(\bx-\bm_i)^T}$$
+Covariance matrix is a normalized version of the scatter matrix.
+$$\bS_B = \sum_{i=1}^c{n_i(\bm_i-\bm)(\bm_i-\bm)^T}$$
+$\bm$ is the overall mean that is computed, including samples from all classes.
+\textbf{eigendecompose}:\\
+Decomposing $\inv{\bS_w} \bS_B$ and obtaining eigenvectors.
+The number of linear discriminants is at most $c-1$ ($\bS_B$ is sum of rank one or less matrices)\\
+
+Then we can construct $\bW$ and project by $\bX^{'} = \bX\bW$
 % --------------------------------
-
-\section{Linear Regression}
-Given $\inR{\bX}{p}$, $Y \in \R$, consider linear(affine) prediction rules,\\
-$F_{\text{lin}} := \{ \bx \mapsto \tp{\bx}\bbeta + \beta_0 : \inR{\bbeta}{p}, \beta_0 \in \R \}$
-\subsection{Empirical risk minimization}
-\textbf{Empirical risk} is the sample average of squared error:\\
-$\hat{R}(f) = \hat{\E}_n \ell(f(\bX), Y) = \frac{1}{n}\sum_{i=1}{n}(f(\bX_i) - Y_i)^2$\\
-Choose $\hat{f} := \text{arg } min_{f \in F_\text{lin}} \hat{\E}_n \ell(f(\bX), Y)$
-\ruler
-Find $\hat{f} : \bx \mapsto \tp{\bx}\hat{\bbeta}$, such that\\
-$
-\hat{\bbeta} = \text{arg } min_{\inR{\bbeta}{p}}\sum_{i=1}^{n}(\tp{\bX_i}\bbeta - Y_i)^2
-             = \text{arg } min_{\inR{\bbeta}{p}}\underbrace{\norm{\bX\bbeta - \by}^2}_\text{RSS}
-$\\
-where \textbf{design matrix} $\inR{\bX}{n \times p}$ and \textbf{response vector} $\inR{\by}{n}$.
-\ruler
-\textbf{Normal equations}:
-$\tp{\bX}\bX\bbeta = \tp{\bX}\by \Rightarrow \hat{\bbeta} = \inv{(\tp{\bX}\bX)}\tp{\bX}\by$
-\ruler
-\textbf{Projection Theorem} also leads to normal equations:\\
-$\inv{(\by-\hat{\by})}\bX = 0 \Leftrightarrow \tp{\bX}(\by-\bX\bbeta) = 0 \Leftrightarrow \tp{\bX}\by=\tp{\bX}\bX\bbeta$
-\subsection{Linear model with additive Gaussian noise}
-Model the conditional distribution of $Y$ given $\bX = \bx$ as:
-$P(Y|\bX=\bx) = \gaussian{\tp{\bx}\bbeta}{\sigma^2}$\\
-Equivalently: $Y = \tp{\bx}\bbeta + \epsilon$, where $\epsilon \sim \gaussian{\mathbf{0}}{\sigma^2}$
-\ruler
-\textbf{Maximum likelihood} is least square:\\
-$
-L(\bbeta) = \prod_{i=1}^{n}p(Y_i|\bX_i,\bbeta) \Leftrightarrow
-\ell(\bbeta) = g(\sigma^2)-\frac{1}{2\sigma^2}\sum_{i=1}^{n}(y_i-\tp{\bX}\bbeta)^2
-$
-\ruler
-Fix $\bX$. Provided $\E\by=\bX\bbeta$ and $\text{Cov}(\by)=\sigma^2\bI$
-\ruler
-\textbf{Bayesian analysis}:
-Treat $\bbeta$ as a r.v. with prior distribution $\gaussian{\mathbf{0}}{\tau^2\bI}$,
-then compute posterior distribution $P(\bbeta|\bX, Y)$.
-\ruler
-$P(\bbeta|\bX_1, Y_1,\dots,\bX_n,Y_n) \propto P(Y_1,\dots,Y_n|\bbeta,\bX_1,\dots,\bX_n)P(\bbeta)$\\
-$P(\bbeta|\bX_1, Y_1,\dots,\bX_n,Y_n) \propto exp(-\frac{1}{2}(\sum_{i=1}^{n}\frac{(Y_i-\tp{\bX}_i\bbeta)^2}{\sigma^2}+\frac{1}{\tau^2}\norm{\bbeta}^2))$
-% --------------------------------
-
-\section{Linear Regression Regularization}
-\textbf{Subset selection} is like $L0$ regularization:
-RSS decreases as the complexity increases because the best fit with a smaller subset is always possible with a larger subset.
-\ruler
-\textbf{Find a path through subset space}: using cross-validation and forward-stepwise selection or backward-stepwise selection (need $n > p$).
-\ruler
-\textbf{Ridge regression} is like $L2$ regularization:
-$\hat{\bbeta} = \text{arg }\min_{\bbeta}(\sum_{i=1}^n(y_i-\tp{\bx}_i\bbeta)^2 + \lambda\sum_{j=1}{p}\beta_j^2)$\\
-$\hat{\bbeta}^{\text{ridge}}=\inv{(\tp{\bX}\bX+\lambda\bI)}\tp{\bx}\by$
-\ruler
-\textbf{Lasso regression} is like $L1$ regularization:
-$\hat{\bbeta} = \text{arg }\min_{\bbeta}(\sum_{i=1}^n(y_i-\tp{\bx}_i\bbeta)^2 + \lambda\sum_{j=1}{p}|\beta_j|)$
-\ruler
-% \columnbreak\\
-While ridge regression leads to reduced, but non-zero values of the coefficients,
-Lasso regression forces some coefficients to be zero.
-\ruler
-\textbf{Bayesian analysis}:
-Ridge regression is equivalent to a MAP estimate with a gaussian prior.
-Lasso regression is equivalent to a MAP estimate with a Laplace prior.
-% --------------------------------
-
-\section{Logistic Regression}
-Model \textbf{log odds} ($\log p/(1-p)$) as an affine function of $\bx$.
-\ruler
-$P(Y=1|\bx)=\frac{1}{1+\text{exp}(\tp{\bbeta}\bx)}$
-Given data $(\bX_1, Y_1),\dots,(\bX_n, Y_n) \in \R^{p} \times \{0,1\}$,
-estimate $\bbeta$ with maximum likelihood.
-\ruler
-\textbf{Log likelihood}:\\
-$\ell(\bbeta) = \sum_{i=1}^{n}y_i\log \mu_i(\bbeta)+(1-y_i)\log(1-\mu_i(\bbeta))$,\\
-where $\mu_i(\bbeta) = P(Y=1|\bX=\bx_i,\bbeta)=\frac{1}{1+\text{exp}(-\tp{\bbeta}\bx_i)}$
-\ruler
-$\nabla_{\bbeta}\mu_i(\bbeta) = \mu_i(\bbeta)(1-\mu_i(\bbeta))\bx_i$\\
-$\nabla_{\bbeta}\ell(\bbeta)=\sum_{i=1}^{n}(y_i-\mu_i(\bbeta))\bx_i = \tp{\bX}(\by-\bmu)$\\
-$\nabla_{\bbeta}^2\ell(\bbeta)=\sum_{i=1}^{n}-\mu_i(\bbeta)(1-\mu_i(\bbeta))\bx_i\tp{\bx}_i = -\tp{\bX}\diag(\bmu(1-\bmu))\bX$
-$\hat{\bbeta}^{\text{ml}}$ solves: $\sum_{i=1}^{n}y_i\bx_i=\sum_{i=1}^{n}\mu_i{\bbeta}\bx_i$
-\ruler
-\textbf{Gradient ascent}:\\
-$\bbeta^{(t+1)}=\bbeta^{(t)}+\eta\nabla_{\bbeta}\ell(\bbeta^{(t)})$ : $O(np)$/step\\
-\textbf{Stochastic gradient ascent}:\\
-$\bbeta^{(t+1)}=\bbeta^{(t)}+\eta(y_{i_{t}}-\mu_{i_{t}}(\bbeta^{(t)}))\bx_{i_{t}}$ : $O(p)$/step\\
-\textbf{Newton-Raphson method}:\\
-$\bbeta^{(t+1)}=\bbeta^{(t)}-\inv{[\nabla_{\bbeta}^2\ell(\bbeta^{(t)})]}\nabla_{\bbeta}\ell(\bbeta^{(t)})$
-\ruler
-\textbf{Newton's method for root finding}:
-$x_{n+1} = x_{n} - \frac{f(x_n)}{f^{\prime}(x_n)}$
-\ruler
-\textbf{Prediction}
-$
-\hat{p}(y|\bx)=
-\begin{cases}
-    P(Y=1 |\bx),  & \text{if } y=1\\
-    P(Y=-1|\bx),  & \text{if } y=-1\\
-\end{cases}
-$\\
-\textbf{Log loss (Binomial Deviance)}:
-$\ell_\text{log}(\hat{p}(\cdot|\bx),y)=-\log(\hat{p}(y|\bx))$\\
-\textbf{Minimize}:
-$\frac{1}{n}\sum_{i=1}^{n}\log(1+\text{exp}(-y_i\tp{\bbeta}\bx_i))$
-% --------------------------------
-
-\section{Linear Discriminant Analysis}
-\textbf{Linear discriminant functions}:\\
-$\delta_k(\bx) = \tp{\bmu}_k\inv{\bSigma}\bx - \frac{1}{2}\tp{\bmu}_k\inv{\bSigma}\bmu_k + \log\pi_k$
-\ruler
-\textbf{Estimate with Maximum likelihood}:\\
-$\pi_k = P(Y=k) \Leftrightarrow \hat{\pi}_k = \frac{n_k}{n}$\\
-$\bmu_k = \E[\bX|Y=k] \Leftrightarrow \hat{\bmu}_k = \frac{1}{n_k}\sum_{i:y_i=k}\bx_i$\\
-$\bSigma = \text{Var}[\bX|Y=k] \Leftrightarrow \hat{\bSigma} = \frac{1}{n}\sum_{k}\sum{i:y_i=k}(\bx_i-\bmu_k)\tp{(\bx_i-\bmu_k)}$
-
-\section{SVM with Convex Optimization}
-\textbf{Lagrangian}: rewrite constraint as penalties for a convex optimization problem
-such that $L(x,\lambda)=f_0(x)+\sum_{i=1}^{m}\lambda_{i}f_{i}(x)$.
-\ruler
-\textbf{Weak duality}:
-$\underbrace{p^*=\min_{x}\max_{\lambda\geq0}L(x,\lambda)}_\text{primal}\geq\underbrace{\max_{\lambda\geq0}\min_{x}L(x,\lambda)=d^*}_\text{dual}$
-\ruler
-% \columnbreak\\
-\textbf{Strong duality}: \\
-if there is a saddle point $(x^*, \lambda^*)$ such that for all $x$ and $\lambda\geq0$,
-$L(x^*,\lambda)\leq L(x^*,\lambda^*)\leq L(x,\lambda^*)$, then primal and dual have the same value ($p^* = d^*$).
-\ruler
-\textbf{Karush-Kuhn-Tucker optimality conditions}:\\
-Primal feasibility: $f_i(x)\leq0$; Dual feasibility: $\lambda_i\geq0$\\
-Complementary slackness: $\lambda_i f_i(x)=0$\\
-Stationarity: $\nabla f_0(x)+\sum_{i}\lambda_i\nabla f_i(x) = 0$
-\ruler
-\textbf{Hard margin SVM}:\\
-$L(\btheta,\alpha) = \frac{1}{2}\norm{\btheta}^2 + \sum_{i=1}^{n}\alpha_i(1-y_i\tp{\btheta}\bx_i)$\\
-$g(\alpha)=\min_{\btheta} L(\btheta,\alpha)$\\
-setting $\btheta^* = \sum_{i=1}^{n}\alpha_i y_i \bx_i$,\\
-$g(\alpha)=\sum_{i=1}^{n}\alpha_i-\frac{1}{2}\sum_{i,j}\alpha_{i}\alpha_{j}y_{i}y_{j}\tp{\bx}_{i}\bx_{j}$
-\ruler
-\textbf{Hard margein SVM dual problem}:
-$\max_{\alpha} \sum_{i=1}^{n}\alpha_i-\frac{1}{2}\sum_{i,j}\alpha_{i}\alpha_{j}y_{i}y_{j}\tp{\bx}_{i}\bx_{j}$, s.t. $\alpha_i\geq0$ $(i=1,\dots,n)$.
-$\min_{\balpha} \frac{1}{2}\tp{\balpha}\diag(\by)\mathbf{K}\diag(\by)\balpha - \tp{\balpha}\mathbf{1}$, s.t. $\balpha\geq\mathbf{0}$.
-\ruler
-\textbf{Soft margin SVM}:\\
-$L(\btheta,\xi,\alpha,\lambda) = \frac{1}{2}\norm{\btheta}^2 + \frac{C}{n}\sum_{i=1}^{n}\xi_i + \sum_{i=1}^{n}\alpha_i(1-y_i\tp{\btheta}\bx_i-\xi_i) - \sum_{i=1}^{n}\lambda_i\xi_i$
-\ruler
-\textbf{Soft margein SVM dual problem}:
-$\min_{\balpha} \frac{1}{2}\tp{\balpha}\diag(\by)\mathbf{K}\diag(\by)\balpha - \tp{\balpha}\mathbf{1}$, s.t. $\mathbf{0}\leq\balpha\leq\frac{C}{n}$.
 % --------------------------------
 
 \section{K-Nearest Neighbors}
-Given $\bx_q$, take vote among its k nearest neighbors, or take mean of $f$ values of k nearest neighbors if real-values.
+
+Choose K and a distance metric\\
+
+Given $\bx_q$, take majority voting among its k nearest neighbors, or take the mean of $f$ values of k nearest neighbors if real-values.
 $\hat{f}(\bx_q) \leftarrow \frac{1}{k} \sum_{i=1}^{k} f(\bx_i)$
 \ruler
 \textbf{Distance metrics:}\\
 p-norm: $\norm{\bz}_p = (\sum_{i=1}^{d}|z_i|^p)^{1/p}$
 \ruler
+\textbf{Pros:}\\
+Memory-based approach, the model adapts as we collect new training data\\
+\textbf{Cons:}\\
+Computational complexity (linear growth of complexity; use KD-Tree)\\
+Storage space can be a challenge (no samples discarded during training)\\
+Curse of dimensionality (the feature space becomes increasingly large; use feature selection or dimensionality reduction)
+\ruler
 \textbf{K-d tree} for space partitioning, need backtracking to find real neighbors.
 % --------------------------------
 
 \section{Decision Tree}
-\textbf{Entropy}: $H = \sum_{i} - p_i\log_{2}p_i$
+
+Typical impurity measurements:\\
+\textbf{Gini Impurity}: $I_G(t)=\sum^c_{i=1}{p(i|t)(1-p(i|t))} = 1 - \sum_{i=1}^c{p(i|t)^2}$\\
+$p(i|t)$ is the proportion of the samples that belong to class i for a particular node t.\\
+\textbf{Entropy}: $H = \sum_{i} - p_i\log_{2}p_i$\\
+\textbf{Classification error}: $I_E=1-\max\{p(i|t)\}$\\
+useful for pruning but not recommended for growing decision trees as it is less sensitive to changes in the class probability of the nodes.\\
+How to split:\\
+\textbf{Information Gain}: $IG(D_p,f)=I(D_P)-\frac{N_{left}}{N_p}I(D_{left})-\frac{N_{right}}{N_p}I(D_{right})$\\
+Split the node at the most informative features (maximize information gain at each split)
 \ruler
 \textbf{AdaBoost}:\\
+To iteratively train a sequence of weak learners, each focusing on the examples that were misclassified by the previous learners. This is achieved by adjusting the distribution of example weights, giving more weight to the misclassified examples in each iteration.\\
 weights update: $\alpha_t = \frac{1}{2}\ln \frac{1-\epsilon_t}{\epsilon_t}$\\
 distribution update: $D_{t+1}(i)=\frac{D_{t}(i)}{Z_t} \times
 \begin{cases}
@@ -396,45 +249,91 @@ distribution update: $D_{t+1}(i)=\frac{D_{t}(i)}{Z_t} \times
     e^{\alpha_t},   & \text{if } h_t{x_i} \neq y_i
 \end{cases}
 $
+\ruler
+\textbf{Random Forest}:
+1. Draw a random bootstrap sample of size n (with replacement)\\
+2. Grow a decision tree. At each node:\\
+\-\hspace{0.5cm} a. Randomly select d features without replacement\\
+\-\hspace{0.5cm} b. Split node using the feature that provides the best split\\
+3. Repeat 1. 2. k times\\
+4. Aggregate and majority voting\\
+
+\textbf{Bootstrap Sample size}:\\
+decreasing n: increases randomness and diversity, thus reducing overfitting; lower overall performance\\
+increasing n: may increase the degree of overfitting\\
+
 % --------------------------------
 
 \section{Neural Net}
-\textbf{Forward}:
-$\la{\bz}{i} = \la{\ba}{i-1}\la{\bW}{i-1}, \la{\ba}{i} = \la{f}{i}(\la{\bz}{i})$
-\ruler
-\textbf{Backward MSE}:\\
-$
-\pfrac{J_{MSE}}{\la{\bW}{i}} = \la{\bdelta}{i+1}\pfrac{\la{\bz}{i+1}}{\la{\bW}{i}}
-                             = \tp{(\la{\ba}{i})}\la{\bdelta}{i+1},
-$
-$
-\la{\bdelta}{i+1} = \frac{1}{\nbs}(\la{\ba}{out}-\by)\odot
-                    \dfi{out}(\la{\bz}{out})\tp{(\la{\bW}{out-1})}
-                    \cdots
-                    \tp{(\la{\bW}{i+1})}
-                    \odot\dfi{i+1}(\la{\bz}{i+1})
-$
-\ruler
-\textbf{Backward CEE}:\\
-$
-\pfrac{J_{CEE}}{\la{\bW}{i}} = \la{\bdelta}{i+1}\pfrac{\la{\bz}{i+1}}{\la{\bW}{i}}
-                             = \tp{(\la{\ba}{i})}\la{\bdelta}{i+1}
-$
-$
-\la{\bdelta}{i+1} = \frac{1}{\nbs}
-                    [(\la{\ba}{out}-\by)\oslash(\bhy\odot(1-\la{\ba}{out}))]
-                    \odot
-                    \dfi{out}(\la{\bz}{out})\tp{(\la{\bW}{out-1})}
-                    \cdots
-                    \tp{(\la{\bW}{i+1})}
-                    \odot\dfi{i+1}(\la{\bz}{i+1})
-$
+\begin{figure}[H]
+    \includegraphics[width=0.8\linewidth]{output.png}
+\end{figure}
+
+% --------------------------------
+\section{Evaluation \& Fine-tuning}
+
+\textbf{Evaluation Metrics}:\\
+\begin{figure}[H]
+    \includegraphics[width=0.5\linewidth]{3.png}
+\end{figure}
+
+False Positive Rate: $FPR = \frac{FP}{FP+TN}$\\
+True Positive Rate: $TPR = Recall = \frac{TP}{FN+TP}$\\
+Precision: $PRE = \frac{TP}{TP+FP}$\\
+F1 score: $F_1 = \frac{2PRE \times REC}{PRE + REC}$\\
+
+\textbf{Metrics for Multi-class classification}:\\
+$$PRE_{micro} = \frac{TP_1+\dots+TP_k}{TP_1+\dots+TP_k + FP_1 + \dots + FP_k}$$
+$$PRE_{macro} = \frac{PRE_1+\dots+PRE_k}{k}$$
 % --------------------------------
 
 \section{Clustering}
+
+Hierarchical clustering algo typically have local objectives while partitional algo have global ones.\\
+
 $C_i = \text{argmin}_{k}\norm{\bx_i-\bmu_k}^2$\\
 $\bmu_k = \frac{\sum_{C_i=k}\bx_i}{\sum{C_i=k}1}$
+\ruler
+1.select K points as initial centroids\\
+2.repeat the following:\\
+\-\hspace{0.5cm} Form K clusters by\\
+\-\hspace{0.5cm} Recompute the centroids of each cluster\\
+Until: The centroids don't change
+\ruler
+Complexity O(\#points * \#clusters * \#iterations * \#attributes)\\
+May yield empty clusters: choose points or points in the cluster that contribute most to SSE. Or, update the centroids after each assignment.
+
+\textbf{Evaluation Metrics}:\\
+SSE:  $SSE = \sum_{i=1}^k \sum_{x \in C_i} {dist^2(m_i,x)}$
+One easy way to reduce SSE is to increase K. A good clustering with a smaller K can have a lower SSE than a poor clustering with a higher K.\\
+
+\textbf{Limitations}: different size of clusters;Non-globular shapes; outliers. 
+\ruler
+\textbf{Hierarchical clustering}: Agglomerative: bottom-up merging; Divisive: split cluster from 1 to K
+
+\textbf{Interclass similarity}:\\
+Min (non-elliptical shapes; sensitive to noise and outliers); Max (robust to noise and outliers; tend to break large clusters and biased towards globular clusters); Group Average (need to average connectivity for scalability, similar to NCC); Distance between centroids;
+
+% --------------------------------
+\section{Ensemble Learning}
+
+When the error rate of base classifier is smaller than 0.5, then the ensemble model will have higher accuracy.
+
+\textbf{Weighted Majority Vote Classifier}:
+
+$$\hat y = \arg \max_i \sum_{j=1}^{m}{w_j\chi_A(C_j(x) = i)}$$
+
+- $w_j$ is a weight associated with a base classifier $C_j$,\\
+- $\hat y$ is the predicted class label of the ensemble,\\
+- $\chi_A$ is an indicator function, if the condition is correct then $\chi$ returns 1, else 0\\
+- $A$ is a set of unique class label
+\ruler
+\textbf{Bagging}:\\
+The key idea behind Bagging is that by training multiple base learners on different subsets of the training data, the ensemble can capture different aspects of the underlying patterns in the data. This helps to reduce the variance of the individual base learners, leading to more stable and accurate predictions.\\
+
+
 \end{multicols*}
+
 % --------------------------------
 
 \end{document}
